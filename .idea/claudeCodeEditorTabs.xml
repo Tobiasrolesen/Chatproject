@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ClaudeCodeEditorTabs">
+    <option name="activeSessionId" value="2ab050d0-325b-4059-805d-430723437b8d" />
+    <option name="openSessionIds">
+      <list>
+        <option value="36fd5ed4-50e6-4303-8d44-8bb9c614d75a" />
+        <option value="24109e75-ebd1-4292-84e1-7a7e7eb3f3ae" />
+        <option value="4f7ac498-b077-4357-8e1a-063e37361c73" />
+        <option value="2ab050d0-325b-4059-805d-430723437b8d" />
+      </list>
+    </option>
+    <option name="sessionPaths">
+      <map>
+        <entry key="24109e75-ebd1-4292-84e1-7a7e7eb3f3ae" value="/sessions/c74b7a5e-0018-4249-bb2f-5bddd89d8a78" />
+        <entry key="2ab050d0-325b-4059-805d-430723437b8d" value="/sessions/c74b7a5e-0018-4249-bb2f-5bddd89d8a78" />
+        <entry key="36fd5ed4-50e6-4303-8d44-8bb9c614d75a" value="/sessions/80d313f1-5a2c-42f8-b3ff-ccb40d570c9b" />
+        <entry key="4f7ac498-b077-4357-8e1a-063e37361c73" value="/sessions/c74b7a5e-0018-4249-bb2f-5bddd89d8a78" />
+      </map>
+    </option>
+    <option name="sessionTitles">
+      <map>
+        <entry key="24109e75-ebd1-4292-84e1-7a7e7eb3f3ae" value="Når vi om lidt begynder at programmere tager du så" />
+        <entry key="2ab050d0-325b-4059-805d-430723437b8d" value="Når vi om lidt begynder at programmere tager du så" />
+        <entry key="36fd5ed4-50e6-4303-8d44-8bb9c614d75a" value="I have just tried to push my master branch and mai" />
+        <entry key="4f7ac498-b077-4357-8e1a-063e37361c73" value="Når vi om lidt begynder at programmere tager du så" />
+      </map>
+    </option>
+  </component>
+</project>
