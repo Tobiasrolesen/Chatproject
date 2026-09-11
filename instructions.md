@@ -7,7 +7,8 @@ Dette er en enkel Java-konsolapplikation.
 - Brug Java 21.
 - Brug ikke database.
 - Brug ikke Spring Boot eller andre frameworks.
-- Hold løsningen enkel og forståelig.
+- Hold løsningen enkel og forståelig
+- Skal bruge en lav delt arkitektur som fx OOP (Object Oriented Programming) med services, repositories og entities.
 
 ## Kvalitet og konventioner
 
@@ -15,9 +16,17 @@ Dette er en enkel Java-konsolapplikation.
 - Koden skal kunne forklares, testes og reviewes af udvikleren.
 - Navngivning:
     - Klasser: `PascalCase` (f.eks. `CardService`, `ScryfallService`)
+      - Derudover skal klasserne i projektet Chatprogram kun være med disse navne:
+        - `ChatServer` starter serveren og accepterer forbindelser.
+        - `ClientHandler` håndterer kommunikationen med én klient.
+        - `ChatClient` forbinder klienten og sender brugerens beskeder.
+        - `ServerListener` modtager beskeder fra serveren.
+        - `Message` repræsenterer en besked.
+        - `MessageParser` opbygger og parser protokolbeskeder.
+        - `ClientRegistry` holder styr på tilsluttede brugere.
+        - `ChatRoomManager` holder styr på chatrum og medlemmer.
     - Metoder og variabler: `camelCase` (f.eks. `fetchImageUrl`, `testCard`)
     - Konstanter: `SNAKE_CASE_UPPER` (f.eks. `MAX_RETRIES`, `NORMAL_IMAGE_JSON`)
-
 ## GitHub Workflow (Gælder kun hvis der arbejdes i Issues)
 
 Hvis du specifikt har bedt om at arbejde ud fra et GitHub Issue:

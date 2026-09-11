@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Server {
+public class ChatServer {
     private static final int PORT = 5001;
 
     public static final int MAX_CLIENTS = 10;

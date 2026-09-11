@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
-public class Client {
+public class ChatClient {
     private static final String HOST = "localhost";
 
     private static final int PORT = 5001;
