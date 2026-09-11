@@ -23,12 +23,15 @@ public class ChatServer {
                         MAX_CLIENTS
                 );
 
+        ClientRegistry clientRegistry = new ClientRegistry();
+        ChatRoomManager chatRoomManager = new ChatRoomManager();
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Ny kunde: " + clientSocket.getRemoteSocketAddress());
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                ClientHandler clientHandler = new ClientHandler(clientSocket, clientRegistry, chatRoomManager);
                 ThreadPool.execute(clientHandler);
 
 

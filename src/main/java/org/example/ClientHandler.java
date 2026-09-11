@@ -11,75 +11,111 @@ import java.nio.charset.StandardCharsets;
 public class ClientHandler extends Thread {
 
     private final Socket clientSocket;
+    private final ClientRegistry clientRegistry;
+    private final ChatRoomManager chatRoomManager;
 
-    public ClientHandler(Socket clientSocket) {
+    private PrintWriter writer;
+    private String username;
+    private String currentRoom;
+
+    public ClientHandler(Socket clientSocket, ClientRegistry clientRegistry, ChatRoomManager chatRoomManager) {
         this.clientSocket = clientSocket;
+        this.clientRegistry = clientRegistry;
+        this.chatRoomManager = chatRoomManager;
     }
 
-    public void run(){
+    public String getUsername() {
+        return username;
+    }
 
+    /** Called by ChatRoomManager from other clients' threads to deliver a line to this client. */
+    public void send(String line) {
+        writer.println(line);
+    }
+
+    @Override
+    public void run() {
         String workerName = Thread.currentThread().getName();
-
-        System.out.printf(
-                "[%s] Begynder at betjene %s%n",
-                workerName,
-                clientSocket.getRemoteSocketAddress()
-        );
 
         try (
                 Socket socket = clientSocket;
-
-                BufferedReader reader =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        socket.getInputStream(),
-                                        StandardCharsets.UTF_8
-                                )
-                        );
-
-                PrintWriter writer =
-                        new PrintWriter(
-                                new OutputStreamWriter(
-                                        socket.getOutputStream(),
-                                        StandardCharsets.UTF_8
-                                ),
-                                true
-                        )
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                PrintWriter out = new PrintWriter(
+                        new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true)
         ) {
-            String username;
-            while ((username = reader.readLine()) != null) {
-                System.out.printf(
-                        "[%s] Modtaget: %s%n",
-                        workerName,
-                        username
-                );
+            this.writer = out;
 
-                if (username.equalsIgnoreCase("QUIT")) {
-                    System.out.printf(
-                            "[%s] Kunden går%n",
-                            workerName
-                    );
-                    break;
-                }
-                writer.println("Velkommen " + username + " til Java Beans");
-                while(true){
-                    String line = reader.readLine();
-                    if(line.equalsIgnoreCase("QUIT")){
-                        System.out.printf(
-                                "[%s] Kunden går%n",
-                                workerName
-                        );
-                        break;
+            if (!login(reader)) {
+                return;
+            }
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                Message message = MessageParser.parseClientMessage(line);
+
+                switch (message.getType()) {
+                    case "TEXT" -> handleText(message);
+                    case "QUIT" -> {
+                        System.out.printf("[%s] %s afbryder%n", workerName, username);
+                        return;
                     }
-                    if(line.isEmpty()){
-                        System.out.println("Brugere skriver intet");
-                        break;
-                    }
-                    writer.println(username + " Echo: " + line);
+                    default -> System.out.printf(
+                            "[%s] Ukendt beskedtype fra %s: %s%n", workerName, username, line);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.printf("[%s] Forbindelsen til %s blev afbrudt uventet%n", workerName, username);
+        } finally {
+            disconnect();
+        }
+    }
+
+    /**
+     * Keeps reading LOGIN attempts on this connection until one succeeds.
+     * A taken/invalid username only rejects that attempt (ERROR reply) - it
+     * must not close the connection, otherwise the client can never retry
+     * with a different name.
+     */
+    private boolean login(BufferedReader reader) throws IOException {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            Message loginMessage = MessageParser.parseClientMessage(line);
+            String requestedName = loginMessage.getPayload().trim();
+
+            if (!"LOGIN".equals(loginMessage.getType()) || requestedName.isEmpty()) {
+                send(MessageParser.formatServerMessage(
+                        new Message("ERROR", "server", "", "Du skal logge ind med et brugernavn")));
+                continue;
+            }
+
+            if (!clientRegistry.register(requestedName, this)) {
+                send(MessageParser.formatServerMessage(
+                        new Message("ERROR", "server", requestedName, "Brugernavnet er optaget")));
+                continue;
+            }
+
+            this.username = requestedName;
+            this.currentRoom = ChatRoomManager.DEFAULT_ROOM;
+            chatRoomManager.join(currentRoom, this);
+
+            send(MessageParser.formatServerMessage(
+                    new Message("LOGIN_OK", "server", currentRoom, "Velkommen " + username)));
+
+            return true;
+        }
+        return false;
+    }
+
+    private void handleText(Message message) {
+        Message broadcastMessage = new Message("TEXT", username, currentRoom, message.getPayload());
+        chatRoomManager.broadcast(currentRoom, broadcastMessage, true);
+    }
+
+    private void disconnect() {
+        if (username != null) {
+            chatRoomManager.leave(currentRoom, this);
+            clientRegistry.unregister(username);
         }
     }
 }

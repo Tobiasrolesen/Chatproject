@@ -49,35 +49,68 @@ public class ChatClient {
                     "Velkommen til Java Beans"
             );
 
-            System.out.println("Hvad er dit brugernavn?");
+            String username = login(keyboard, serverReader, serverWriter);
+            if (username == null) {
+                return;
+            }
 
+            ServerListener serverListener = new ServerListener(serverReader);
+            serverListener.setDaemon(true);
+            serverListener.start();
 
-            System.out.println(
-                    "Skriv QUIT for at gå"
-            );
-
+            System.out.println("Du er i rummet '" + ChatRoomManager.DEFAULT_ROOM + "'. Skriv QUIT for at gå.");
 
             String line;
             while ((line = keyboard.readLine()) != null) {
                 if (line.equalsIgnoreCase("QUIT")) {
+                    serverWriter.println(MessageParser.formatClientMessage("QUIT", "", ""));
                     break;
                 }
 
-                else if (line.trim().isEmpty()) {
-                    System.out.println("Indtast venligst et navn.");
+                if (line.trim().isEmpty()) {
                     continue;
                 }
 
-                String Username = line.trim();
-                serverWriter.println(Username);
-
-                String response = serverReader.readLine();
-                System.out.printf("Server: %s%n", response);
+                serverWriter.println(
+                        MessageParser.formatClientMessage("TEXT", ChatRoomManager.DEFAULT_ROOM, line));
             }
-
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static String login(BufferedReader keyboard, BufferedReader serverReader, PrintWriter serverWriter)
+            throws IOException {
+        while (true) {
+            System.out.println("Hvad er dit brugernavn?");
+            String username = keyboard.readLine();
+            if (username == null) {
+                return null;
+            }
+
+            username = username.trim();
+            if (username.isEmpty()) {
+                System.out.println("Indtast venligst et navn.");
+                continue;
+            }
+
+            serverWriter.println(MessageParser.formatClientMessage("LOGIN", "", username));
+
+            String response = serverReader.readLine();
+            if (response == null) {
+                System.out.println("Mistede forbindelsen til serveren.");
+                return null;
+            }
+
+            Message message = MessageParser.parseServerMessage(response);
+            if ("ERROR".equals(message.getType())) {
+                System.out.println("Fejl: " + message.getPayload());
+                continue;
+            }
+
+            System.out.println(message.getPayload());
+            return username;
         }
     }
 }
