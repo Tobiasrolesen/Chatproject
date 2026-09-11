@@ -13,7 +13,7 @@ public class ChatServer {
 
     public static void main(String[] args) {
         System.out.printf(
-                "Java Beans åbner på port %d med max %d kunder%n",
+                "Java Beans åbner på port %d med max %d kunder%n goddag min ven",
                 PORT,
                 MAX_CLIENTS
         );
