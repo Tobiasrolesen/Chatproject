@@ -60,7 +60,9 @@ public class ChatClient {
 
             System.out.println("Du er i rummet '" + ChatRoomManager.DEFAULT_ROOM + "'. Skriv QUIT for at gå.");
             System.out.println("Skriv /private <navn> <besked> for at sende en privat besked.");
+            System.out.println("Skriv /join <rumnavn> for at skifte rum, eller /create <rumnavn> for at oprette et nyt.");
 
+            String currentRoom = ChatRoomManager.DEFAULT_ROOM;
             String line;
             while ((line = keyboard.readLine()) != null) {
                 if (line.equalsIgnoreCase("QUIT")) {
@@ -86,8 +88,30 @@ public class ChatClient {
                     continue;
                 }
 
+                if (line.startsWith("/join ")) {
+                    String room = line.substring("/join ".length()).trim();
+                    if (room.isEmpty()) {
+                        System.out.println("Brug: /join <rumnavn>");
+                        continue;
+                    }
+                    currentRoom = room;
+                    serverWriter.println(MessageParser.formatClientMessage("JOIN_ROOM", room, ""));
+                    continue;
+                }
+
+                if (line.startsWith("/create ")) {
+                    String room = line.substring("/create ".length()).trim();
+                    if (room.isEmpty()) {
+                        System.out.println("Brug: /create <rumnavn>");
+                        continue;
+                    }
+                    currentRoom = room;
+                    serverWriter.println(MessageParser.formatClientMessage("CREATE_ROOM", room, ""));
+                    continue;
+                }
+
                 serverWriter.println(
-                        MessageParser.formatClientMessage("TEXT", ChatRoomManager.DEFAULT_ROOM, line));
+                        MessageParser.formatClientMessage("TEXT", currentRoom, line));
             }
 
         } catch (IOException e) {
