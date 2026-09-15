@@ -63,6 +63,8 @@ public class ClientHandler extends Thread {
                     switch (message.getType()) {
                         case "TEXT" -> handleText(message);
                         case "PRIVATE" -> handlePrivate(message);
+                        case "JOIN_ROOM" -> handleJoinRoom(message);
+                        case "CREATE_ROOM" -> handleCreateRoom(message);
                         case "QUIT" -> {
                             send(MessageParser.formatServerMessage(
                                     new Message("INFO", "server", "", "Du er nu logget af")));
@@ -147,6 +149,40 @@ public class ClientHandler extends Thread {
                 new Message("PRIVATE", username, target, message.getPayload()));
         recipient.send(line);
         send(line);
+    }
+
+    private void switchRoom(String newRoom) {
+        chatRoomManager.leave(currentRoom, this);
+        currentRoom = newRoom;
+        chatRoomManager.join(currentRoom, this);
+        send(MessageParser.formatServerMessage(
+                new Message("INFO", "server", currentRoom, "Du er nu i rummet " + currentRoom)));
+    }
+
+    private void handleJoinRoom(Message message) {
+        String room = message.getTarget().trim();
+        if (room.isEmpty()) {
+            send(MessageParser.formatServerMessage(new Message("ERROR", "server", "", "Angiv et rumnavn")));
+            return;
+        }
+        if (!chatRoomManager.exists(room)) {
+            send(MessageParser.formatServerMessage(new Message("ERROR", "server", room, "Rummet findes ikke")));
+            return;
+        }
+        switchRoom(room);
+    }
+
+    private void handleCreateRoom(Message message) {
+        String room = message.getTarget().trim();
+        if (room.isEmpty()) {
+            send(MessageParser.formatServerMessage(new Message("ERROR", "server", "", "Angiv et rumnavn")));
+            return;
+        }
+        if (!chatRoomManager.create(room)) {
+            send(MessageParser.formatServerMessage(new Message("ERROR", "server", room, "Rummet findes allerede")));
+            return;
+        }
+        switchRoom(room);
     }
 
     private void disconnect() {

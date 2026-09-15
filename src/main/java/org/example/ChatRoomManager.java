@@ -19,6 +19,15 @@ public class ChatRoomManager {
         rooms.computeIfAbsent(room, r -> ConcurrentHashMap.newKeySet()).add(handler);
     }
 
+    /** Atomic claim-or-fail: creates the room only if it doesn't already exist. */
+    public boolean create(String room) {
+        return rooms.putIfAbsent(room, ConcurrentHashMap.newKeySet()) == null;
+    }
+
+    public boolean exists(String room) {
+        return rooms.containsKey(room);
+    }
+
     public void leave(String room, ClientHandler handler) {
         Set<ClientHandler> members = rooms.get(room);
         if (members != null) {
