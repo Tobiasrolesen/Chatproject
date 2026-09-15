@@ -6,9 +6,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
 public class ClientHandler extends Thread {
+
+    private static final int IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
     private final Socket clientSocket;
     private final ClientRegistry clientRegistry;
@@ -50,19 +53,32 @@ public class ClientHandler extends Thread {
                 return;
             }
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                Message message = MessageParser.parseClientMessage(line);
+            socket.setSoTimeout(IDLE_TIMEOUT_MS);
 
-                switch (message.getType()) {
-                    case "TEXT" -> handleText(message);
-                    case "QUIT" -> {
-                        System.out.printf("[%s] %s afbryder%n", workerName, username);
-                        return;
+            try {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    Message message = MessageParser.parseClientMessage(line);
+
+                    switch (message.getType()) {
+                        case "TEXT" -> handleText(message);
+                        case "PRIVATE" -> handlePrivate(message);
+                        case "QUIT" -> {
+                            send(MessageParser.formatServerMessage(
+                                    new Message("INFO", "server", "", "Du er nu logget af")));
+                            System.out.printf("[%s] %s afbryder%n", workerName, username);
+                            return;
+                        }
+                        default -> System.out.printf(
+                                "[%s] Ukendt beskedtype fra %s: %s%n", workerName, username, line);
                     }
-                    default -> System.out.printf(
-                            "[%s] Ukendt beskedtype fra %s: %s%n", workerName, username, line);
                 }
+            } catch (SocketTimeoutException e) {
+                // Caught here, while the socket/writer are still open, so the notice actually
+                // reaches the client before the try-with-resources closes the connection below.
+                send(MessageParser.formatServerMessage(
+                        new Message("ERROR", "server", username, "Du er blevet logget af pga. inaktivitet")));
+                System.out.printf("[%s] %s logget af pga. inaktivitet%n", workerName, username);
             }
         } catch (IOException e) {
             System.out.printf("[%s] Forbindelsen til %s blev afbrudt uventet%n", workerName, username);
@@ -110,6 +126,27 @@ public class ClientHandler extends Thread {
     private void handleText(Message message) {
         Message broadcastMessage = new Message("TEXT", username, currentRoom, message.getPayload());
         chatRoomManager.broadcast(currentRoom, broadcastMessage, true);
+    }
+
+    private void handlePrivate(Message message) {
+        String target = message.getTarget().trim();
+        ClientHandler recipient = clientRegistry.get(target);
+
+        if (target.isEmpty() || recipient == null) {
+            send(MessageParser.formatServerMessage(
+                    new Message("ERROR", "server", target, "Brugeren er ikke online")));
+            return;
+        }
+        if (target.equals(username)) {
+            send(MessageParser.formatServerMessage(
+                    new Message("ERROR", "server", target, "Du kan ikke sende en privat besked til dig selv")));
+            return;
+        }
+
+        String line = MessageParser.formatServerMessage(
+                new Message("PRIVATE", username, target, message.getPayload()));
+        recipient.send(line);
+        send(line);
     }
 
     private void disconnect() {

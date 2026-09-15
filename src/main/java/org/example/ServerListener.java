@@ -11,9 +11,18 @@ import java.io.IOException;
 public class ServerListener extends Thread {
 
     private final BufferedReader serverReader;
+    private final String ownUsername;
+    private volatile boolean expectedDisconnect = false;
 
-    public ServerListener(BufferedReader serverReader) {
+    public ServerListener(BufferedReader serverReader, String ownUsername) {
         this.serverReader = serverReader;
+        this.ownUsername = ownUsername;
+    }
+
+    /** Call this right before the client closes the connection on purpose (e.g. QUIT), so the
+     *  read failure that follows isn't reported as an unexpected error. */
+    public void expectDisconnect() {
+        expectedDisconnect = true;
     }
 
     @Override
@@ -24,7 +33,9 @@ public class ServerListener extends Thread {
                 print(MessageParser.parseServerMessage(line));
             }
         } catch (IOException e) {
-            System.out.println("Forbindelsen til serveren blev afbrudt.");
+            if (!expectedDisconnect) {
+                System.out.println("Forbindelsen til serveren blev afbrudt.");
+            }
         }
     }
 
@@ -33,6 +44,15 @@ public class ServerListener extends Thread {
             case "TEXT" -> System.out.printf("[%s][%s] %s: %s%n",
                     message.getTimestamp(), message.getTarget(), message.getSender(), message.getPayload());
             case "ERROR" -> System.out.printf("[%s] Fejl: %s%n", message.getTimestamp(), message.getPayload());
+            case "PRIVATE" -> {
+                if (message.getSender().equals(ownUsername)) {
+                    System.out.printf("[%s] (privat til %s) %s%n",
+                            message.getTimestamp(), message.getTarget(), message.getPayload());
+                } else {
+                    System.out.printf("[%s] (privat fra %s) %s%n",
+                            message.getTimestamp(), message.getSender(), message.getPayload());
+                }
+            }
             default -> System.out.printf("[%s] %s%n", message.getTimestamp(), message.getPayload());
         }
     }
