@@ -54,20 +54,35 @@ public class ChatClient {
                 return;
             }
 
-            ServerListener serverListener = new ServerListener(serverReader);
+            ServerListener serverListener = new ServerListener(serverReader, username);
             serverListener.setDaemon(true);
             serverListener.start();
 
             System.out.println("Du er i rummet '" + ChatRoomManager.DEFAULT_ROOM + "'. Skriv QUIT for at gå.");
+            System.out.println("Skriv /private <navn> <besked> for at sende en privat besked.");
 
             String line;
             while ((line = keyboard.readLine()) != null) {
                 if (line.equalsIgnoreCase("QUIT")) {
+                    serverListener.expectDisconnect();
                     serverWriter.println(MessageParser.formatClientMessage("QUIT", "", ""));
                     break;
                 }
 
                 if (line.trim().isEmpty()) {
+                    continue;
+                }
+
+                if (line.startsWith("/private ")) {
+                    String rest = line.substring("/private ".length()).trim();
+                    int spaceIndex = rest.indexOf(' ');
+                    if (spaceIndex <= 0 || rest.substring(spaceIndex + 1).trim().isEmpty()) {
+                        System.out.println("Brug: /private <navn> <besked>");
+                        continue;
+                    }
+                    String target = rest.substring(0, spaceIndex);
+                    String payload = rest.substring(spaceIndex + 1).trim();
+                    serverWriter.println(MessageParser.formatClientMessage("PRIVATE", target, payload));
                     continue;
                 }
 

@@ -13,15 +13,12 @@ public class ChatServer {
 
     public static void main(String[] args) {
         System.out.printf(
-                "Java Beans åbner på port %d med max %d kunder%n goddag min ven",
+                "Java Beans åbner på port %d med max %d kunder%n",
                 PORT,
                 MAX_CLIENTS
         );
 
-        ExecutorService ThreadPool =
-                Executors.newFixedThreadPool(
-                        MAX_CLIENTS
-                );
+        ExecutorService ThreadPool = Executors.newFixedThreadPool(MAX_CLIENTS);
 
         ClientRegistry clientRegistry = new ClientRegistry();
         ChatRoomManager chatRoomManager = new ChatRoomManager();
