@@ -74,8 +74,12 @@ public class ClientHandler extends Thread {
                             System.out.printf("[%s] %s afbryder%n", workerName, username);
                             return;
                         }
-                        default -> System.out.printf(
-                                "[%s] Ukendt beskedtype fra %s: %s%n", workerName, username, line);
+                        default -> {
+                            System.out.printf(
+                                    "[%s] Ukendt beskedtype fra %s: %s%n", workerName, username, line);
+                            send(MessageParser.formatServerMessage(new Message(
+                                    "ERROR", "server", "", "Ukendt eller fejlformateret kommando: " + line)));
+                        }
                     }
                 }
             } catch (SocketTimeoutException e) {
