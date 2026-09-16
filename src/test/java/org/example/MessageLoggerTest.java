@@ -22,43 +22,45 @@ class MessageLoggerTest {
 
     @Test
     void createsADatedLogFile(@TempDir Path tempDir) {
-        new MessageLogger(tempDir.toString());
-
-        assertTrue(Files.exists(tempDir.resolve(todayFileName())));
+        try (MessageLogger logger = new MessageLogger(tempDir.toString())) {
+            assertTrue(Files.exists(tempDir.resolve(todayFileName())));
+        }
     }
 
     @Test
     void doesNotOverwriteAnExistingLogFile(@TempDir Path tempDir) throws IOException {
         Files.createFile(tempDir.resolve(todayFileName()));
 
-        new MessageLogger(tempDir.toString());
-
-        assertTrue(Files.exists(tempDir.resolve(todayFileName())));
-        assertTrue(Files.exists(tempDir.resolve(todayFileName().replace(".txt", "_1.txt"))));
+        try (MessageLogger logger = new MessageLogger(tempDir.toString())) {
+            assertTrue(Files.exists(tempDir.resolve(todayFileName())));
+            assertTrue(Files.exists(tempDir.resolve(todayFileName().replace(".txt", "_1.txt"))));
+        }
     }
 
     @Test
     void logsARoomMessageWithPublicAsReceiver(@TempDir Path tempDir) throws IOException {
-        MessageLogger logger = new MessageLogger(tempDir.toString());
-        logger.logText("alice", "general", "Hej alle");
+        try (MessageLogger logger = new MessageLogger(tempDir.toString())) {
+            logger.logText("alice", "general", "Hej alle");
 
-        String[] fields = onlyLogLine(tempDir).split("\\|", 5);
-        assertEquals("alice", fields[1]);
-        assertEquals("general", fields[2]);
-        assertEquals("public", fields[3]);
-        assertEquals("Hej alle", fields[4]);
+            String[] fields = onlyLogLine(tempDir).split("\\|", 5);
+            assertEquals("alice", fields[1]);
+            assertEquals("general", fields[2]);
+            assertEquals("public", fields[3]);
+            assertEquals("Hej alle", fields[4]);
+        }
     }
 
     @Test
     void logsAPrivateMessageWithTheRecipientAsReceiver(@TempDir Path tempDir) throws IOException {
-        MessageLogger logger = new MessageLogger(tempDir.toString());
-        logger.logPrivate("alice", "bob", "Hemmelig besked");
+        try (MessageLogger logger = new MessageLogger(tempDir.toString())) {
+            logger.logPrivate("alice", "bob", "Hemmelig besked");
 
-        String[] fields = onlyLogLine(tempDir).split("\\|", 5);
-        assertEquals("alice", fields[1]);
-        assertEquals("PRIVATE", fields[2]);
-        assertEquals("bob", fields[3]);
-        assertEquals("Hemmelig besked", fields[4]);
+            String[] fields = onlyLogLine(tempDir).split("\\|", 5);
+            assertEquals("alice", fields[1]);
+            assertEquals("PRIVATE", fields[2]);
+            assertEquals("bob", fields[3]);
+            assertEquals("Hemmelig besked", fields[4]);
+        }
     }
 
     private String onlyLogLine(Path tempDir) throws IOException {

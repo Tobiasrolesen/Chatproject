@@ -1,5 +1,6 @@
 package org.example;
 
+import java.io.Closeable;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,7 +15,7 @@ import java.time.format.DateTimeFormatter;
  * A single shared instance is written to by many ClientHandler threads at
  * once, so the write path is synchronized to keep log lines from interleaving.
  */
-public class MessageLogger {
+public class MessageLogger implements Closeable {
 
     private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -60,5 +61,14 @@ public class MessageLogger {
         }
         String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
         writer.println(String.join("|", timestamp, sender, type, receiver, payload));
+    }
+
+    /** Releases the underlying file handle. Not used by the long-running server, but needed so
+     *  tests (and anything else creating short-lived loggers) don't leak an open file on disk. */
+    @Override
+    public synchronized void close() {
+        if (writer != null) {
+            writer.close();
+        }
     }
 }
