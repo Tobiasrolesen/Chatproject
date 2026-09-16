@@ -22,13 +22,14 @@ public class ChatServer {
 
         ClientRegistry clientRegistry = new ClientRegistry();
         ChatRoomManager chatRoomManager = new ChatRoomManager();
+        MessageLogger messageLogger = new MessageLogger("logs");
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Ny kunde: " + clientSocket.getRemoteSocketAddress());
-                ClientHandler clientHandler = new ClientHandler(clientSocket, clientRegistry, chatRoomManager);
+                ClientHandler clientHandler = new ClientHandler(clientSocket, clientRegistry, chatRoomManager, messageLogger);
                 ThreadPool.execute(clientHandler);
 
 

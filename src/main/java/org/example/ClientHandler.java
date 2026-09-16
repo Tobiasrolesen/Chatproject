@@ -16,15 +16,18 @@ public class ClientHandler extends Thread {
     private final Socket clientSocket;
     private final ClientRegistry clientRegistry;
     private final ChatRoomManager chatRoomManager;
+    private final MessageLogger messageLogger;
 
     private PrintWriter writer;
     private String username;
     private String currentRoom;
 
-    public ClientHandler(Socket clientSocket, ClientRegistry clientRegistry, ChatRoomManager chatRoomManager) {
+    public ClientHandler(Socket clientSocket, ClientRegistry clientRegistry, ChatRoomManager chatRoomManager,
+                          MessageLogger messageLogger) {
         this.clientSocket = clientSocket;
         this.clientRegistry = clientRegistry;
         this.chatRoomManager = chatRoomManager;
+        this.messageLogger = messageLogger;
     }
 
     public String getUsername() {
@@ -128,6 +131,7 @@ public class ClientHandler extends Thread {
     private void handleText(Message message) {
         Message broadcastMessage = new Message("TEXT", username, currentRoom, message.getPayload());
         chatRoomManager.broadcast(currentRoom, broadcastMessage, true);
+        messageLogger.logText(username, currentRoom, message.getPayload());
     }
 
     private void handlePrivate(Message message) {
@@ -149,6 +153,7 @@ public class ClientHandler extends Thread {
                 new Message("PRIVATE", username, target, message.getPayload()));
         recipient.send(line);
         send(line);
+        messageLogger.logPrivate(username, target, message.getPayload());
     }
 
     private void switchRoom(String newRoom) {
