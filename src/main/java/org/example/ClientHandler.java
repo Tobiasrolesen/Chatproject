@@ -34,7 +34,6 @@ public class ClientHandler extends Thread {
         return username;
     }
 
-    /** Called by ChatRoomManager from other clients' threads to deliver a line to this client. */
     public void send(String line) {
         writer.println(line);
     }
@@ -83,8 +82,7 @@ public class ClientHandler extends Thread {
                     }
                 }
             } catch (SocketTimeoutException e) {
-                // Caught here, while the socket/writer are still open, so the notice actually
-                // reaches the client before the try-with-resources closes the connection below.
+
                 send(MessageParser.formatServerMessage(
                         new Message("ERROR", "server", username, "Du er blevet logget af pga. inaktivitet")));
                 System.out.printf("[%s] %s logget af pga. inaktivitet%n", workerName, username);
@@ -96,12 +94,6 @@ public class ClientHandler extends Thread {
         }
     }
 
-    /**
-     * Keeps reading LOGIN attempts on this connection until one succeeds.
-     * A taken/invalid username only rejects that attempt (ERROR reply) - it
-     * must not close the connection, otherwise the client can never retry
-     * with a different name.
-     */
     private boolean login(BufferedReader reader) throws IOException {
         String line;
         while ((line = reader.readLine()) != null) {

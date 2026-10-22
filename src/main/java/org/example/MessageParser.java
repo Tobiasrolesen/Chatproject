@@ -1,11 +1,8 @@
 package org.example;
 
-/**
- * Builds and parses protocol lines.
- * Client -> server:  TYPE|TARGET|PAYLOAD
- * Server -> client:  TIMESTAMP|TYPE|SENDER|TARGET|PAYLOAD
- */
 public class MessageParser {
+
+    //Denne klasse bruges til at oversætte tekst til objekter så resten af koden ikke skal kende protokollen
 
     public static Message parseClientMessage(String line) {
         String[] fields = line.split("\\|", 3);

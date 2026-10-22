@@ -3,11 +3,6 @@ package org.example;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-/**
- * Runs on its own thread so the client can receive broadcasts from the
- * server at any time, while the main thread is blocked waiting for the
- * user to type the next line of keyboard input.
- */
 public class ServerListener extends Thread {
 
     private final BufferedReader serverReader;
@@ -19,8 +14,6 @@ public class ServerListener extends Thread {
         this.ownUsername = ownUsername;
     }
 
-    /** Call this right before the client closes the connection on purpose (e.g. QUIT), so the
-     *  read failure that follows isn't reported as an unexpected error. */
     public void expectDisconnect() {
         expectedDisconnect = true;
     }
@@ -39,6 +32,7 @@ public class ServerListener extends Thread {
         }
     }
 
+    //Print bruges til pænt at udskrive beskeder.
     private void print(Message message) {
         switch (message.getType()) {
             case "TEXT" -> System.out.printf("[%s][%s] %s: %s%n",

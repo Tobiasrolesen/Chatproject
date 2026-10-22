@@ -10,11 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Appends every TEXT/PRIVATE message to a dated txt file for audit purposes.
- * A single shared instance is written to by many ClientHandler threads at
- * once, so the write path is synchronized to keep log lines from interleaving.
- */
 public class MessageLogger implements Closeable {
 
     private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -26,6 +21,7 @@ public class MessageLogger implements Closeable {
         this.writer = openLogFile(logDirectory);
     }
 
+    //Opretter en ny fil hvis der allerede findes en fil med den korrekte dato sætter den et _1 eller _2 efter indtil den finder et ledigt navn
     private PrintWriter openLogFile(String directory) {
         try {
             Path dir = Path.of(directory);
@@ -47,14 +43,17 @@ public class MessageLogger implements Closeable {
         }
     }
 
+    //Logger public text
     public synchronized void logText(String sender, String room, String payload) {
         log(sender, room, "public", payload);
     }
 
+    //Logger privat text
     public synchronized void logPrivate(String sender, String receiver, String payload) {
         log(sender, "PRIVATE", receiver, payload);
     }
 
+    //Log formatet
     private void log(String sender, String type, String receiver, String payload) {
         if (writer == null) {
             return;
@@ -63,8 +62,6 @@ public class MessageLogger implements Closeable {
         writer.println(String.join("|", timestamp, sender, type, receiver, payload));
     }
 
-    /** Releases the underlying file handle. Not used by the long-running server, but needed so
-     *  tests (and anything else creating short-lived loggers) don't leak an open file on disk. */
     @Override
     public synchronized void close() {
         if (writer != null) {
